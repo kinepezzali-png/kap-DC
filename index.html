@@ -2941,7 +2941,14 @@ function buildBilanPromptDouleur(kap){
 
 async function startChatAfterTrace(){
   var kap = computeKAPScoreDouleur();
-  closeAndResetResult();
+  // Fermer uniquement le résultat + overlay bilan, sans réinitialiser
+  var result = document.getElementById('trace-result');
+  if(result) result.style.display = 'none';
+  var panel = document.getElementById('trace-panel');
+  if(panel) panel.classList.remove('result-mode');
+  var trOverlay = document.getElementById('trace-overlay');
+  if(trOverlay) trOverlay.classList.remove('open');
+  document.body.style.overflow = '';
   setTimeout(async function(){
     document.getElementById('overlay').classList.add('open');
     document.body.style.overflow='hidden';
