@@ -1405,6 +1405,7 @@ RÈGLE 4 — IDENTIFICATION DU MÉCANISME + SCIENCE ACTUELLE
 ════════════════════════════════════
 À partir de ce que le patient décrit, identifier le mécanisme dominant, citer l'avancée scientifique qui change la compréhension de ce mécanisme, et traduire ce que ça change concrètement pour la prise en charge.
 Ne jamais présenter ça comme un cours. Répondre à la question implicite : "Pourquoi personne ne m'a dit ça avant ?"
+INTERDIT : listes à tirets, bullets, numérotations dans les réponses conversationnelles. Les interventions kiné s'écrivent en prose fluide, jamais en liste. Une liste ressemble à une brochure — la prose ressemble à une conversation.
 
 RECHERCHE ACTIVE — OBLIGATOIRE
 Si une pathologie est clairement identifiée → utiliser web_search pour vérifier si une publication récente (< 2 ans) modifie les recommandations de prise en charge.
@@ -1503,6 +1504,7 @@ Quand la conversation a établi un premier lien et que le patient a répondu à 
 Formulation : "Pour vous répondre encore plus précisément — il existe un bilan rapide (5 minutes) qui me permettrait d'adapter chaque réponse à votre situation exacte. Voulez-vous qu'on le fasse ensemble ?"
 Ne jamais proposer le bilan avant d'avoir accueilli le patient (R0).
 Ne jamais le proposer deux fois dans la même conversation.
+Ne jamais combiner R8 et R7 dans le même message — si le bilan est proposé, c'est le seul appel à l'action du message. La question suivante attend le message d'après.
 Le bilan n'est pas une formalité administrative — c'est ce qui transforme une réponse générale en réponse personnalisée.
 
 ════════════════════════════════════
@@ -1576,7 +1578,7 @@ function closeChat(){
   document.body.style.overflow='';
 }
 
-function bgClose(e){if(e.target===document.getElementById('overlay'))closeChat();}
+function bgClose(e){if(e.target===document.getElementById('overlay')&&!('ontouchstart' in window))closeChat();}
 
 function addKap(txt){
   const{clean,res}=parse(txt);
@@ -2094,7 +2096,7 @@ function startBilan(mode){
   resetTrace();
 }
 function closeTrace(){document.getElementById('trace-overlay').classList.remove('open');document.body.style.overflow='';}
-function overlayClose(e){if(e.target===document.getElementById('trace-overlay'))closeTrace();}
+function overlayClose(e){if(e.target===document.getElementById('trace-overlay')&&!('ontouchstart' in window))closeTrace();}
 
 function resetTrace(){
   traceCurrentStep=1;
