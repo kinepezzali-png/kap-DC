@@ -935,14 +935,38 @@ textarea::placeholder{color:var(--ink-xs)}
     Vous n'êtes pas cassé.<br><em>Votre alarme est déréglée.</em>
   </h1>
   <hr class="hero-sep">
-  <p class="hero-accroche">Comprendre · Recalibrer · Reprendre</p>
-  <p class="hero-p">La douleur chronique n'est pas dans la tête. Elle a un mécanisme neurobiologique précis — et ce mécanisme, on peut le modifier. KAP est là pour vous l'expliquer et vous accompagner.</p>
+  <p class="hero-accroche">Comprendre · Mesurer · Progresser</p>
+  <p class="hero-p">La douleur chronique n'est pas une fatalité. Elle a un mécanisme précis — et ce mécanisme se modifie. KAP vous accompagne sur la durée : un premier bilan pour comprendre où vous en êtes, une prise en charge ciblée, un rebilan pour voir que vous avancez.</p>
   <div class="hero-btns">
     <button class="btn-p" onclick="openChatDirect()">Parler à KAP IA — c'est gratuit</button>
-    <button class="btn-g" onclick="document.getElementById('situations').scrollIntoView({behavior:'smooth'})">Trouver ma situation →</button>
+    <button class="btn-g" onclick="openTrace()">Faire mon bilan →</button>
   </div>
-  <div class="hero-btns-bilan">
-    <button class="btn-bilan-hero" onclick="openTrace()">Faire mon bilan →</button>
+  <div class="hero-btns-bilan" id="hero-progression-btn" style="display:none">
+    <button class="btn-bilan-hero" onclick="openTrace()">📊 Refaire mon bilan — voir ma progression →</button>
+  </div>
+  <div class="hero-btns-bilan" id="hero-first-bilan-btn">
+    <button class="btn-bilan-hero" onclick="openTrace()">Premier bilan gratuit · 5 minutes →</button>
+  </div>
+
+  <!-- Récupération bilan par numéro -->
+  <div id="hero-retrieve-wrap" style="margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative;z-index:2">
+    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--ink-xs);display:flex;align-items:center;gap:16px">
+      <span style="width:40px;height:1px;background:var(--line-m);display:inline-block"></span>
+      Vous avez déjà un bilan ?
+      <span style="width:40px;height:1px;background:var(--line-m);display:inline-block"></span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="immat-retrieve-input" type="text" placeholder="KD-260409-XXXX"
+        style="padding:10px 16px;border:1px solid var(--amber-line);background:var(--white);color:var(--ink);font-family:Jost,sans-serif;font-size:13px;letter-spacing:1px;outline:none;border-radius:4px;width:190px;transition:border .2s"
+        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--amber-line)'"
+        onkeydown="if(event.key==='Enter')retrieveBilanAndOpenChat()">
+      <button onclick="retrieveBilanAndOpenChat()"
+        style="padding:10px 18px;background:transparent;border:1px solid var(--amber-line);color:var(--amber);font-family:Jost,sans-serif;font-size:12px;cursor:pointer;transition:all .22s;border-radius:4px"
+        onmouseover="this.style.background='var(--amber-bg)'" onmouseout="this.style.background='transparent'">
+        Retrouver →
+      </button>
+    </div>
+    <div id="immat-retrieve-err" style="display:none;font-size:11.5px;color:#C04040">Numéro non trouvé sur cet appareil.</div>
   </div>
 </section>
 
@@ -1405,7 +1429,6 @@ RÈGLE 4 — IDENTIFICATION DU MÉCANISME + SCIENCE ACTUELLE
 ════════════════════════════════════
 À partir de ce que le patient décrit, identifier le mécanisme dominant, citer l'avancée scientifique qui change la compréhension de ce mécanisme, et traduire ce que ça change concrètement pour la prise en charge.
 Ne jamais présenter ça comme un cours. Répondre à la question implicite : "Pourquoi personne ne m'a dit ça avant ?"
-INTERDIT : listes à tirets, bullets, numérotations dans les réponses conversationnelles. Les interventions kiné s'écrivent en prose fluide, jamais en liste. Une liste ressemble à une brochure — la prose ressemble à une conversation.
 
 RECHERCHE ACTIVE — OBLIGATOIRE
 Si une pathologie est clairement identifiée → utiliser web_search pour vérifier si une publication récente (< 2 ans) modifie les recommandations de prise en charge.
@@ -1504,7 +1527,6 @@ Quand la conversation a établi un premier lien et que le patient a répondu à 
 Formulation : "Pour vous répondre encore plus précisément — il existe un bilan rapide (5 minutes) qui me permettrait d'adapter chaque réponse à votre situation exacte. Voulez-vous qu'on le fasse ensemble ?"
 Ne jamais proposer le bilan avant d'avoir accueilli le patient (R0).
 Ne jamais le proposer deux fois dans la même conversation.
-Ne jamais combiner R8 et R7 dans le même message — si le bilan est proposé, c'est le seul appel à l'action du message. La question suivante attend le message d'après.
 Le bilan n'est pas une formalité administrative — c'est ce qui transforme une réponse générale en réponse personnalisée.
 
 ════════════════════════════════════
@@ -1548,7 +1570,7 @@ DISCLAIMER : KAP IA est un outil d'information et d'orientation. Il ne remplace 
 Sources : Moseley · Pain Revolution — Vlaeyen · Fear-Avoidance Model — Nijs et al. — Bower et al.
 
 Situation du patient : ${sit}
-`;function openChat(){
+${getBilanRank()>1?`CONTEXTE PARCOURS : C'est le ${getBilanRank()}ème bilan de ce patient. Il revient mesurer sa progression. Traiter différemment d'un premier contact — reconnaître l'engagement, s'appuyer sur l'historique.`:'Premier contact — construire la relation avant tout.'}`;function openChat(){
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow='hidden';
   if(hist.length===0)startWithSit(sit);
@@ -1578,7 +1600,7 @@ function closeChat(){
   document.body.style.overflow='';
 }
 
-function bgClose(e){if(e.target===document.getElementById('overlay')&&!('ontouchstart' in window))closeChat();}
+function bgClose(e){if(e.target===document.getElementById('overlay'))closeChat();}
 
 function addKap(txt){
   const{clean,res}=parse(txt);
@@ -1713,6 +1735,18 @@ function scr(){document.getElementById('anc')?.scrollIntoView({behavior:'smooth'
 // ── RGPD ──
 // DEV : pour retester la bannière → resetRGPD() dans la console
 function resetRGPD(){ localStorage.removeItem('kap-rgpd-ok'); location.reload(); }
+// Hero — afficher bouton progression si bilan existant
+(function(){
+  try{
+    var bilans=JSON.parse(localStorage.getItem('kap-bilans-history')||'[]');
+    if(bilans.length>=1){
+      var pb=document.getElementById('hero-progression-btn');
+      var fb=document.getElementById('hero-first-bilan-btn');
+      if(pb)pb.style.display='flex';
+      if(fb)fb.style.display='none';
+    }
+  }catch(e){}
+})();
 (function(){
   try {
     if(!localStorage.getItem('kap-rgpd-ok')){
@@ -1985,16 +2019,21 @@ const PATHOLOGY_KEYWORDS={
   fracture:['fracture','vis','plaque','ostéosynthèse','immobilisation fracture'],
 };
 
-let ctxOpen=false,currentPathology=null;
+let ctxOpen=false,currentPathology=null,pathologyMentions={};
 
 function detectAndShowPanel(text){
+  if(mc<2)return; // Attendre au moins 2 échanges
   const lower=text.toLowerCase();
   let detected=null,maxMatches=0;
   for(const[pathology,keywords]of Object.entries(PATHOLOGY_KEYWORDS)){
     const matches=keywords.filter(kw=>lower.includes(kw.toLowerCase())).length;
     if(matches>maxMatches){maxMatches=matches;detected=pathology;}
   }
-  if(detected&&CTX_DATA[detected]&&detected!==currentPathology){
+  if(!detected)return;
+  // Incrémenter le compteur de mentions cross-conversation
+  pathologyMentions[detected]=(pathologyMentions[detected]||0)+1;
+  // Déclencher seulement si mentionné 2+ fois ET pathologie différente de l'actuelle
+  if(pathologyMentions[detected]>=2&&detected!==currentPathology&&CTX_DATA[detected]){
     currentPathology=detected;renderCtxPanel(CTX_DATA[detected]);openCtxPanel();
   }
 }
@@ -2096,7 +2135,7 @@ function startBilan(mode){
   resetTrace();
 }
 function closeTrace(){document.getElementById('trace-overlay').classList.remove('open');document.body.style.overflow='';}
-function overlayClose(e){if(e.target===document.getElementById('trace-overlay')&&!('ontouchstart' in window))closeTrace();}
+function overlayClose(e){if(e.target===document.getElementById('trace-overlay'))closeTrace();}
 
 function resetTrace(){
   traceCurrentStep=1;
@@ -2582,6 +2621,35 @@ function showTraceResult(){
   if(immatWrap) immatWrap.style.display = 'flex';
   if(immatNum) immatNum.textContent = immat;
 
+  // Sauvegarder le bilan complet avec l'immat comme clé
+  try{
+    var bilanSnapshot={
+      immat:immat,
+      date:new Date().toISOString(),
+      score:kap.global,
+      dims:kap.dims,
+      eva:traceData.eva,
+      mode:bilanMode,
+      situation:traceData.situation,
+      qualite:traceData.qualite,
+      localisation:traceData.localisation,
+      goal:traceData.goal,
+      psfs:traceData.psfs,
+      progress:traceData.progress,
+      duree:traceData.duree,
+      sommeil:traceData.sommeil,
+      activityText:traceData.activityText,
+      kinesio:traceData.kinesio,
+      pichot:traceData.pichot
+    };
+    localStorage.setItem('kap-bilan-'+immat, JSON.stringify(bilanSnapshot));
+    // Garder une liste des immat récents (max 10)
+    var recents=JSON.parse(localStorage.getItem('kap-immat-recents')||'[]');
+    recents.unshift(immat);
+    if(recents.length>10)recents=recents.slice(0,10);
+    localStorage.setItem('kap-immat-recents',JSON.stringify(recents));
+  }catch(e){}
+
   // Animer les barres
   setTimeout(function(){
     var globalBar = document.getElementById('global-bar-fill');
@@ -2952,6 +3020,8 @@ function buildBilanPromptDouleur(kap){
 
 async function startChatAfterTrace(){
   var kap = computeKAPScoreDouleur();
+  saveBilanToHistory(kap);
+  var progressionCtx = getProgressionContext();
   // Fermer uniquement le résultat + overlay bilan, sans réinitialiser
   var result = document.getElementById('trace-result');
   if(result) result.style.display = 'none';
@@ -2963,13 +3033,13 @@ async function startChatAfterTrace(){
   setTimeout(async function(){
     document.getElementById('overlay').classList.add('open');
     document.body.style.overflow='hidden';
-    hist=[]; mc=0;
+    hist=[]; mc=0; pathologyMentions={};
     var msgs=document.getElementById('msgs');
     if(msgs) msgs.innerHTML='';
 
-    // Afficher bouton bilan
+    // Afficher bouton bilan — fix iOS Safari
     var btn=document.getElementById('btn-voir-bilan-d');
-    if(btn){ btn.style.display='flex'; }
+    if(btn){ btn.style.display='flex'; setTimeout(function(){ btn.style.display='flex'; },400); }
 
     addTyp();
     try{
@@ -2977,7 +3047,7 @@ async function startChatAfterTrace(){
       var r=await fetch('https://gentle-poetry-2315.kinepezzali.workers.dev',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system:sysPrompt,messages:[{role:'user',content:buildBilanPromptDouleur(kap)}]})
+        body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system:sysPrompt,messages:[{role:'user',content:buildBilanPromptDouleur(kap)+progressionCtx}]})
       });
       var d=await r.json();
       rmTyp();
@@ -3001,6 +3071,112 @@ async function startChatAfterTrace(){
 }
 
 updateEva(5);
+
+// ══ HISTORIQUE BILANS — Boucle de Marc ══
+function saveBilanToHistory(kap){
+  try{
+    var bilans=JSON.parse(localStorage.getItem('kap-bilans-history')||'[]');
+    bilans.push({
+      date:new Date().toISOString(),
+      score:kap.global,
+      dims:{D:kap.dims.D,F:kap.dims.F,K:kap.dims.K,Fa:kap.dims.Fa,S:kap.dims.S},
+      eva:traceData.eva,
+      mode:bilanMode
+    });
+    if(bilans.length>10)bilans=bilans.slice(-10);
+    localStorage.setItem('kap-bilans-history',JSON.stringify(bilans));
+  }catch(e){}
+}
+
+function getPreviousBilan(){
+  try{
+    var bilans=JSON.parse(localStorage.getItem('kap-bilans-history')||'[]');
+    return bilans.length>=2?bilans[bilans.length-2]:null;
+  }catch(e){return null;}
+}
+
+function getBilanRank(){
+  try{
+    var bilans=JSON.parse(localStorage.getItem('kap-bilans-history')||'[]');
+    return bilans.length;
+  }catch(e){return 1;}
+}
+
+// ══ RÉCUPÉRATION BILAN PAR NUMÉRO ══
+function retrieveBilanAndOpenChat(){
+  var input=document.getElementById('immat-retrieve-input');
+  var err=document.getElementById('immat-retrieve-err');
+  if(!input)return;
+  var immat=input.value.trim().toUpperCase();
+  if(!immat){input.focus();return;}
+  err.style.display='none';
+  try{
+    var saved=localStorage.getItem('kap-bilan-'+immat);
+    if(!saved){err.style.display='block';return;}
+    var bilan=JSON.parse(saved);
+    openChatWithSavedBilan(bilan);
+  }catch(e){err.style.display='block';}
+}
+
+function openChatWithSavedBilan(bilan){
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  hist=[]; mc=0; pathologyMentions={};
+  var msgs=document.getElementById('msgs');
+  if(msgs)msgs.innerHTML='';
+  var btn=document.getElementById('btn-voir-bilan-d');
+  if(btn){btn.style.display='flex';setTimeout(function(){btn.style.display='flex';},400);}
+
+  var dateStr=new Date(bilan.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  var diff='';
+  var prev=getPreviousBilan();
+  if(prev&&prev.score!==undefined){
+    var d=bilan.score-prev.score;
+    diff=` — évolution depuis le bilan précédent : ${d>=0?'+':''}${d} pts`;
+  }
+
+  var sysRetrieve=`Tu es KAP IA, assistant du cabinet KAP (Kinésithérapie · Activité · Prévention), créé par Marc Pezzali, MK-DE.
+Le patient revient sur son bilan du ${dateStr}. Voici ses données complètes :
+Score KAP global : ${bilan.score}/100
+EVA douleur : ${bilan.eva}/10
+Situation : ${bilan.situation||'non précisée'}
+Qualité douleur : ${(bilan.qualite||[]).join(', ')||'non précisée'}
+Localisation : ${(bilan.localisation||[]).join(', ')||'non précisée'}
+Objectif : ${bilan.goal||'non précisé'}
+Mode bilan : ${bilan.mode||'rapide'}
+${diff}
+
+INSTRUCTION : Accueille ce retour chaleureusement. Récapitule son score et ce que ça signifie pour lui en une ou deux phrases. Demande-lui comment il se sent depuis ce bilan — c'est la porte d'entrée vers la conversation. Une seule question. Vouvoiement. Ton clinicien bienveillant.`;
+
+  addTyp();
+  fetch('https://gentle-poetry-2315.kinepezzali.workers.dev',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,system:sysRetrieve,messages:[{role:'user',content:`Le patient retrouve son bilan numéro ${bilan.immat} du ${dateStr}.`}]})
+  }).then(function(r){return r.json();}).then(function(d){
+    rmTyp();
+    var rep=d.content?.[0]?.text||`Votre bilan du ${dateStr} est là. Comment allez-vous depuis ?`;
+    hist=[{role:'assistant',content:rep}];
+    addKap(rep);
+  }).catch(function(){
+    rmTyp();
+    addKap(`Votre bilan du ${dateStr} est retrouvé. Score KAP : ${bilan.score}/100. Comment vous sentez-vous depuis ?`);
+  });
+}
+
+function getProgressionContext(){
+  var rank=getBilanRank();
+  var prev=getPreviousBilan();
+  if(rank<=1||!prev)return '';
+  var txt=`\nRANG DU BILAN : ${rank}ème bilan (patient de retour)\n`;
+  txt+=`BILAN PRÉCÉDENT (${new Date(prev.date).toLocaleDateString('fr-FR')}) : Score ${prev.score}/100 · EVA ${prev.eva}/10\n`;
+  var kap=computeKAPScoreDouleur();
+  var diff=kap.global-prev.score;
+  var diffEva=traceData.eva-prev.eva;
+  txt+=`ÉVOLUTION : Score ${diff>=0?'+':''}${diff} pts · EVA ${diffEva>=0?'+':''}${diffEva}\n`;
+  txt+=`INSTRUCTION : Ce patient revient pour suivre sa progression. Commencer par reconnaître ce retour — c'est une preuve d'engagement. Souligner l'évolution chiffrée. Si amélioration : la valider et pousser vers la prochaine étape. Si stagnation ou dégradation : accueillir sans jugement, explorer ce qui a changé.\n`;
+  return txt;
+}
 </script>
 
 
@@ -3710,12 +3886,17 @@ updateEva(5);
       </div>
 
       <!-- Numéro bilan -->
-      <div id="kap-res-immat" class="kap-immat-wrap" style="display:none;margin:16px">
-        <div>
-          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-xs);margin-bottom:3px">Numéro de bilan</div>
-          <div class="kap-immat-num" id="kap-immat-num">—</div>
+      <div id="kap-res-immat" class="kap-immat-wrap" style="display:none;margin:16px;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div>
+            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-xs);margin-bottom:3px">Numéro de bilan</div>
+            <div class="kap-immat-num" id="kap-immat-num">—</div>
+          </div>
+          <div class="kap-immat-hint">À communiquer à votre kiné lors de votre prochaine séance.</div>
         </div>
-        <div class="kap-immat-hint">À communiquer à votre kiné lors de votre prochaine séance.</div>
+        <div style="background:rgba(184,122,42,0.06);border-radius:8px;padding:10px 14px;font-size:11.5px;color:var(--ink-s);line-height:1.65;border:1px solid rgba(184,122,42,0.14)">
+          💡 <strong style="color:var(--amber)">Retrouvez votre bilan à tout moment</strong> — retournez sur cette page depuis cet appareil et saisissez ce numéro pour reprendre là où vous en étiez.
+        </div>
       </div>
 
       <!-- QR code -->
