@@ -2963,7 +2963,7 @@ async function startChatAfterTrace(){
       });
       var d=await r.json();
       rmTyp();
-      var rep=d.content?.[0]?.text||'Je suis KAP IA, l'assistant du cabinet KAP créé par Audelia et Marc. Je suis là pour vous accompagner après votre bilan. Qu'est-ce qui vous pèse le plus en ce moment ?';
+      var rep=d.content?.[0]?.text||'Je suis KAP IA, cr\u00e9\u00e9 par une \u00e9quipe de kin\u00e9sith\u00e9rapeutes du cabinet KAP. Je suis l\u00e0 pour vous.';
       hist=[{role:'assistant',content:rep}];
       // Parser le JSON
       try {
@@ -2977,7 +2977,7 @@ async function startChatAfterTrace(){
       }
     }catch(e){
       rmTyp();
-      addKap('Je suis KAP IA, l'assistant du cabinet KAP. Je rencontre une difficulté technique — n'hésitez pas à m'écrire. 🤝');
+      addKap('Je suis KAP IA, cr\u00e9\u00e9 par une \u00e9quipe de kin\u00e9s du cabinet KAP. Je rencontre une difficult\u00e9 technique. 🤝');
     }
   }, 300);
 }
