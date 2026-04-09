@@ -188,6 +188,14 @@ footer{position:relative;z-index:1;padding:48px 52px;display:flex;align-items:ce
 .disc{background:rgba(184,122,42,0.08);border:1px solid var(--amber-line);padding:7px 13px;font-size:11px;color:var(--amber);margin-bottom:9px;display:none;line-height:1.5}
 .disc.on{display:block}
 .ibox{display:flex;align-items:flex-end;gap:9px;background:var(--bg);border:1.5px solid var(--line-m);padding:10px 10px 10px 18px;transition:border-color .2s}
+.upload-btn-d{width:30px;height:30px;border-radius:50%;background:transparent;border:1.5px solid rgba(184,122,42,0.25);color:rgba(184,122,42,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;flex-shrink:0}
+.upload-btn-d:hover{background:rgba(184,122,42,0.08);border-color:rgba(184,122,42,0.5);color:var(--amber)}
+.upload-btn-d svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+#file-input-doc-d{display:none}
+.doc-preview-d{display:none;align-items:center;gap:8px;padding:7px 12px;background:rgba(184,122,42,0.06);border:1px solid rgba(184,122,42,0.2);border-radius:10px;margin-bottom:6px;font-size:12px;color:rgba(184,122,42,0.85);font-family:'Jost',sans-serif}
+.doc-preview-d.show{display:flex}
+.doc-preview-name-d{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-remove-d{background:none;border:none;cursor:pointer;color:rgba(184,122,42,0.5);font-size:13px;padding:0;line-height:1}
 .ibox:focus-within{border-color:var(--amber)}
 textarea{flex:1;background:transparent;border:none;outline:none;font-family:Jost,sans-serif;font-size:13.5px;color:var(--ink);line-height:1.5;resize:none;min-height:22px;max-height:90px}
 textarea::placeholder{color:var(--ink-xs)}
@@ -914,9 +922,14 @@ textarea::placeholder{color:var(--ink-xs)}
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-line-top"></div>
   <div class="hero-line-bot"></div>
   <div class="hero-watermark">DOULEUR</div>
+  <!-- ── KAP MARQUE ── -->
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin-bottom:28px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(80px,14vw,160px);font-weight:400;letter-spacing:clamp(20px,4vw,52px);line-height:1;color:rgba(184,122,42,0.72);text-indent:clamp(20px,4vw,52px);user-select:none">KAP</div>
+    <div style="font-family:'Jost',sans-serif;font-size:8px;letter-spacing:5px;text-transform:uppercase;color:rgba(184,122,42,0.45);margin-top:6px">Kinésithérapie · Activité · Prévention</div>
+  </div>
+
   <div class="hero-badge">Spécialisé douleur chronique & rééducation neurologique</div>
   <h1 class="hero-h1">
     Vous n'êtes pas cassé.<br><em>Votre alarme est déréglée.</em>
@@ -1309,7 +1322,16 @@ textarea::placeholder{color:var(--ink-xs)}
           📊 Voir mon bilan
         </button>
       </div>
+      <div class="doc-preview-d" id="doc-preview-d">
+        <span>📄</span>
+        <span class="doc-preview-name-d" id="doc-preview-name-d"></span>
+        <button class="doc-remove-d" onclick="removeDocD()">✕</button>
+      </div>
       <div class="ibox">
+        <button class="upload-btn-d" onclick="triggerUploadD()" title="Joindre un document PDF ou image">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </button>
+        <input type="file" id="file-input-doc-d" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileUploadD(event)">
         <textarea id="inp" placeholder="Décrivez votre douleur et depuis combien de temps vous l'avez..." rows="1" oninput="onI(this)" onkeydown="onK(event)"></textarea>
         <button class="snd" id="snd" onclick="send()">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -1594,15 +1616,52 @@ function onI(el){
 }
 function onK(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 
+// ── Upload fichier kap-douleur ──
+var docDataD=null, docMimeD=null, docNameD=null;
+
+function triggerUploadD(){document.getElementById('file-input-doc-d').click();}
+
+function removeDocD(){
+  docDataD=null;docMimeD=null;docNameD=null;
+  var p=document.getElementById('doc-preview-d');
+  if(p)p.classList.remove('show');
+}
+
+function handleFileUploadD(event){
+  var file=event.target.files[0];if(!file)return;
+  if(file.size>4*1024*1024){alert('Fichier trop lourd (max 4 Mo)');return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    docDataD=e.target.result.split(',')[1];
+    docMimeD=file.type;docNameD=file.name;
+    var p=document.getElementById('doc-preview-d');
+    var n=document.getElementById('doc-preview-name-d');
+    if(p)p.classList.add('show');
+    if(n)n.textContent=file.name;
+  };
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+
 async function send(){
   const inp=document.getElementById('inp');
   const txt=inp.value.trim();if(!txt)return;
   inp.value='';inp.style.height='auto';
   document.getElementById('snd').classList.remove('on');
-  // Supprimer le micro-message bilan dès le premier message
   var micro=document.getElementById('micro-bilan-msg');if(micro)micro.remove();
   addUser(txt);mc++;
-  hist.push({role:'user',content:txt});
+  // Contenu avec ou sans fichier
+  var userContent;
+  if(docDataD&&docMimeD){
+    userContent=[
+      {type:docMimeD.startsWith('image')?'image':'document',source:{type:'base64',media_type:docMimeD,data:docDataD}},
+      {type:'text',text:txt}
+    ];
+    removeDocD();
+  } else {
+    userContent=txt;
+  }
+  hist.push({role:'user',content:userContent});
   if(mc>=3)document.getElementById('disc').classList.add('on');
   if(mc===5)maybeShowQuestionnaire();
   addTyp();
